@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="ml">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Election Dashboard</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap');
+
+  :root{
+    --bg:#F5F6FA;
+    --surface:#FFFFFF;
+    --surface-2:#FAFBFD;
+    --ink:#15192B;
+    --ink-soft:#4A4F66;
+    --muted:#8A8FA3;
+    --primary:#3F5BF6;
+    --primary-dark:#2E45D6;
+    --accent:#F5A623;
+    --success:#1FAE6B;
+    --danger:#E0455A;
+    --danger-dark:#C03447;
+    --border:rgba(21,25,43,0.09);
+    --shadow:0 8px 24px rgba(21,25,43,0.07);
+    --shadow-lg:0 16px 40px rgba(21,25,43,0.14);
+    --radius:16px;
+  }
+  [data-theme="dark"]{
+    --bg:#0E1018;
+    --surface:#171A26;
+    --surface-2:#1D2030;
+    --ink:#ECEDF2;
+    --ink-soft:#B7BACB;
+    --muted:#74798E;
+    --primary:#6C82FF;
+    --primary-dark:#5468E8;
+    --accent:#F5B94A;
+    --success:#34C97F;
+    --danger:#F0596D;
+    --danger-dark:#D43B50;
+    --border:rgba(255,255,255,0.08);
+    --shadow:0 8px 24px rgba(0,0,0,0.35);
+    --shadow-lg:0 20px 48px rgba(0,0,0,0.5);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+    -webkit-tap-highlight-color: transparent;
+    transition:background .2s, color .2s;
+  }
+  .mono{font-family:'JetBrains Mono',monospace;}
+  h1,h2,h3{font-family:'Sora',sans-serif; margin:0;}
+  img{max-width:100%; display:block;}
+  button{font-family:inherit;}
+
+  /* ===== Layout shells ===== */
+  .app-shell{display:flex; min-height:100vh;}
+  .main-col{flex:1; min-width:0; display:flex; flex-direction:column;}
+
+  /* ===== Top bar ===== */
+  .topbar{
+    position:sticky; top:0; z-index:40;
+    background:var(--surface);
+    border-bottom:1px solid var(--border);
+    padding:14px 18px;
+    display:flex; align-items:center; justify-content:space-between;
+    gap:10px;
+  }
+  .brand{display:flex; align-items:center; gap:10px; min-width:0;}
+  .brand-logo{
+    width:38px; height:38px; border-radius:11px; flex-shrink:0;
+    background:linear-gradient(135deg, var(--primary), var(--primary-dark));
+    display:flex; align-items:center; justify-content:center; overflow:hidden;
+    box-shadow:0 4px 10px rgba(63,91,246,0.35);
+  }
+  .brand-logo img{width:100%; height:100%; object-fit:cover;}
+  .brand-logo .fallback{color:#fff; font-family:'Sora',sans-serif; font-weight:700; font-size:15px;}
+  .brand-text{display:flex; flex-direction:column; line-height:1.2; min-width:0;}
+  .brand-text .eyebrow{font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); font-weight:600;}
+  .brand-text .title{font-size:15px; font-weight:700; font-family:'Sora',sans-serif; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:46vw;}
+
+  .top-actions{display:flex; align-items:center; gap:8px;}
+  .icon-btn{
+    width:38px; height:38px; border-radius:11px; border:1px solid var(--border);
+    background:var(--surface-2); color:var(--ink-soft); display:flex; align-items:center; justify-content:center;
+    cursor:pointer; font-size:17px; transition:.15s; flex-shrink:0;
+  }
+  .icon-btn:hover{border-color:var(--primary); color:var(--primary);}
+
+  .nav-pills{display:flex; gap:6px; background:var(--surface-2); border:1px solid var(--border); border-radius:12px; padding:4px;}
+  .pill{
+    border:none; background:transparent; color:var(--ink-soft);
+    padding:8px 14px; border-radius:9px; font-size:13px; font-weight:600;
+    cursor:pointer; font-family:'Inter',sans-serif; transition:.15s; white-space:nowrap;
+  }
+  .pill.active{background:var(--primary); color:#fff; box-shadow:0 4px 10px rgba(63,91,246,0.3);}
+
+  .wrap{max-width:760px; margin:0 auto; padding:18px 16px 100px; width:100%;}
+
+  /* ===== Status strip ===== */
+  .status-strip{
+    display:flex; align-items:center; gap:10px; padding:11px 14px; border-radius:12px;
+    background:var(--surface); border:1px solid var(--border); margin-bottom:16px; font-size:13px;
+  }
+  .status-strip.open{border-color:rgba(31,174,107,0.35); background:rgba(31,174,107,0.07);}
+  .status-strip.closed{border-color:rgba(224,69,90,0.3); background:rgba(224,69,90,0.06);}
+  .status-dot{width:8px; height:8px; border-radius:50%; flex-shrink:0;}
+  .status-dot.open{background:var(--success); box-shadow:0 0 0 4px rgba(31,174,107,0.18); animation:pulse 1.6s infinite;}
+  .status-dot.closed{background:var(--danger);}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+  .status-strip .label{font-weight:600; flex:1;}
+  .status-strip .time{color:var(--muted); font-family:'JetBrains Mono',monospace; font-size:12px;}
+
+  /* ===== Cards ===== */
+  .card{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    padding:20px;
+    margin-bottom:16px;
+  }
+  .card-title{font-size:15px; font-weight:700; margin-bottom:4px; font-family:'Sora',sans-serif;}
+  .card-sub{font-size:12.5px; color:var(--muted); margin-bottom:14px;}
+  .eyebrow{
+    font-size:11px; letter-spacing:.1em; text-transform:uppercase;
+    color:var(--primary); font-weight:700; margin-bottom:6px; display:block;
+  }
+
+  /* ===== Dashboard stat grid ===== */
+  .stat-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-bottom:16px;}
+  .stat-card{
+    background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:16px;
+    box-shadow:var(--shadow);
+  }
+  .stat-card .num{font-family:'Sora',sans-serif; font-size:26px; font-weight:800; line-height:1;}
+  .stat-card .lbl{font-size:11.5px; color:var(--muted); margin-top:6px; font-weight:600;}
+  .stat-card.accent-primary .num{color:var(--primary);}
+  .stat-card.accent-success .num{color:var(--success);}
+  .stat-card.accent-accent .num{color:var(--accent);}
+  .stat-card.accent-danger .num{color:var(--danger);}
+
+  /* ===== Forms ===== */
+  label{font-size:12.5px; font-weight:600; color:var(--ink-soft); display:block; margin-bottom:5px;}
+  input[type=text], input[type=password], input[type=number], input[type=datetime-local], select, textarea{
+    width:100%; padding:12px 14px; border:1.5px solid var(--border); border-radius:11px;
+    font-family:'Inter',sans-serif; font-size:14.5px; background:var(--surface-2); color:var(--ink);
+    margin-bottom:12px; transition:.15s;
+  }
+  input:focus, select:focus, textarea:focus{outline:none; border-color:var(--primary); box-shadow:0 0 0 3px rgba(63,91,246,0.12);}
+  ::placeholder{color:var(--muted);}
+
+  .btn{
+    display:inline-flex; align-items:center; justify-content:center; gap:7px;
+    border:none; border-radius:12px; padding:13px 18px; font-weight:700; font-size:14px;
+    cursor:pointer; font-family:'Inter',sans-serif; width:100%; transition:transform .1s, box-shadow .15s;
+  }
+  .btn:active{transform:scale(0.98);}
+  .btn:disabled{opacity:.4; cursor:not-allowed;}
+  .btn-primary{background:var(--primary); color:#fff; box-shadow:0 6px 16px rgba(63,91,246,0.3);}
+  .btn-danger{background:var(--danger); color:#fff; box-shadow:0 6px 16px rgba(224,69,90,0.3);}
+  .btn-success{background:var(--success); color:#fff;}
+  .btn-outline{background:transparent; border:1.5px solid var(--border); color:var(--ink);}
+  .btn-ghost{background:var(--surface-2); color:var(--ink-soft); border:1px solid var(--border);}
+  .btn-sm{padding:9px 14px; font-size:13px; width:auto;}
+  .btn-row{display:flex; gap:8px;}
+  .btn-row .btn{flex:1;}
+  .error-text{color:var(--danger); font-size:12.5px; margin-top:-4px; margin-bottom:10px; min-height:14px;}
+
+  /* ===== Login screen ===== */
+  .login-screen{
+    min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px;
+    background:var(--bg);
+  }
+  .login-card{
+    background:var(--surface); border:1px solid var(--border); border-radius:22px;
+    box-shadow:var(--shadow-lg); padding:38px 28px; max-width:380px; width:100%; text-align:center;
+  }
+  .login-card .seal{
+    width:58px; height:58px; border-radius:16px; margin:0 auto 18px;
+    background:linear-gradient(135deg, var(--primary), var(--primary-dark));
+    display:flex; align-items:center; justify-content:center; overflow:hidden;
+    box-shadow:0 8px 20px rgba(63,91,246,0.35);
+  }
+  .login-card .seal img{width:100%; height:100%; object-fit:cover;}
+  .login-card .seal .fallback{color:#fff; font-family:'Sora',sans-serif; font-weight:800; font-size:22px;}
+  .login-card h1{font-size:21px; margin-bottom:4px;}
+  .login-card p{color:var(--muted); font-size:13px; margin:6px 0 22px;}
+
+  /* ===== Logo upload ===== */
+  .upload-box{
+    border:1.5px dashed var(--border); border-radius:14px; padding:18px; text-align:center;
+    cursor:pointer; transition:.15s; margin-bottom:12px; background:var(--surface-2);
+  }
+  .upload-box:hover{border-color:var(--primary);}
+  .upload-box .icon{font-size:24px; margin-bottom:6px;}
+  .upload-box .txt{font-size:12.5px; color:var(--muted); font-weight:600;}
+  .upload-preview{
+    display:flex; align-items:center; gap:12px; padding:10px; border:1px solid var(--border);
+    border-radius:12px; background:var(--surface-2); margin-bottom:12px;
+  }
+  .upload-preview img{width:50px; height:50px; border-radius:10px; object-fit:cover; flex-shrink:0;}
+  .upload-preview .meta{flex:1; min-width:0;}
+  .upload-preview .meta .nm{font-size:13px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .upload-preview .meta .sz{font-size:11px; color:var(--muted);}
+
+  /* ===== Ballot / voting ===== */
+  .ballot-header{
+    display:flex; align-items:center; gap:14px; padding:6px 0 18px;
+  }
+  .ballot-header .logo-circle{
+    width:54px; height:54px; border-radius:16px; flex-shrink:0; overflow:hidden;
+    background:linear-gradient(135deg, var(--primary), var(--primary-dark));
+    display:flex; align-items:center; justify-content:center; box-shadow:0 6px 16px rgba(63,91,246,0.3);
+  }
+  .ballot-header .logo-circle img{width:100%; height:100%; object-fit:cover;}
+  .ballot-header .logo-circle .fallback{color:#fff; font-family:'Sora',sans-serif; font-weight:800; font-size:20px;}
+  .ballot-header h2{font-size:20px;}
+  .ballot-header .sub{font-size:12.5px; color:var(--muted); margin-top:2px;}
+
+  .position-card h3{font-size:16px; color:var(--ink); margin-bottom:14px; display:flex; align-items:center; gap:8px;}
+  .position-card h3::before{content:""; width:4px; height:16px; background:var(--primary); display:inline-block; border-radius:2px;}
+
+  .candidate-grid{display:grid; grid-template-columns:1fr; gap:10px;}
+  .candidate-row{
+    display:flex; align-items:center; gap:13px;
+    border:1.5px solid var(--border); border-radius:14px; padding:12px;
+    cursor:pointer; background:var(--surface-2); position:relative; transition:.12s;
+  }
+  .candidate-row:hover{border-color:var(--primary);}
+  .candidate-row.selected{border-color:var(--primary); background:rgba(63,91,246,0.07); box-shadow:0 0 0 3px rgba(63,91,246,0.1);}
+  .cand-photo{
+    width:48px; height:48px; border-radius:12px; object-fit:cover; flex-shrink:0;
+    background:linear-gradient(135deg, var(--muted), var(--ink-soft));
+  }
+  .cand-photo-fallback{
+    width:48px; height:48px; border-radius:12px; flex-shrink:0;
+    background:linear-gradient(135deg, var(--primary), var(--primary-dark));
+    display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-family:'Sora',sans-serif;
+  }
+  .cand-name{font-weight:700; font-size:15px;}
+  .cand-meta{font-size:12px; color:var(--muted); margin-top:1px;}
+  .check-ring{
+    width:24px; height:24px; border-radius:50%; border:2px solid var(--border); flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; transition:.12s; margin-left:auto;
+  }
+  .candidate-row.selected .check-ring{border-color:var(--primary); background:var(--primary);}
+  .check-ring svg{width:13px; height:13px; opacity:0; transform:scale(0); transition:.15s;}
+  .candidate-row.selected .check-ring svg{opacity:1; transform:scale(1);}
+
+  .submit-bar{
+    position:fixed; bottom:0; left:0; right:0; background:var(--surface);
+    border-top:1px solid var(--border); padding:12px 16px; box-shadow:0 -8px 24px rgba(0,0,0,0.08);
+    display:flex; gap:10px; align-items:center; z-index:40;
+  }
+  .submit-bar .progress-txt{font-size:12px; color:var(--muted); flex:1;}
+
+  /* ===== Confirm overlay ===== */
+  .seal-overlay{
+    position:fixed; inset:0; background:rgba(14,16,24,0.92); z-index:100;
+    display:flex; align-items:center; justify-content:center; flex-direction:column;
+    opacity:0; pointer-events:none; transition:opacity .25s;
+  }
+  .seal-overlay.show{opacity:1; pointer-events:all;}
+  .check-stamp{
+    width:96px; height:96px; border-radius:28px;
+    background:linear-gradient(135deg, var(--success), #138a52);
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:0 20px 50px rgba(31,174,107,0.4);
+    transform:scale(2) rotate(-6deg); opacity:0;
+  }
+  .seal-overlay.show .check-stamp{ animation: stampDown .5s cubic-bezier(.2,1.6,.4,1) forwards; }
+  @keyframes stampDown{
+    0%{transform:scale(2) rotate(-6deg); opacity:0;}
+    60%{transform:scale(0.94) rotate(2deg); opacity:1;}
+    100%{transform:scale(1) rotate(0deg); opacity:1;}
+  }
+  .check-stamp svg{width:46px; height:46px;}
+  .seal-overlay .confirm-text{color:#fff; font-family:'Sora',sans-serif; font-weight:700; font-size:19px; margin-top:22px; opacity:0;}
+  .seal-overlay.show .confirm-text{animation: fadeUp .4s ease .4s forwards;}
+  @keyframes fadeUp{ from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);} }
+  .seal-overlay .confirm-sub{color:rgba(255,255,255,0.55); font-size:13px; margin-top:6px; opacity:0;}
+  .seal-overlay.show .confirm-sub{animation: fadeUp .4s ease .55s forwards;}
+
+  /* ===== Results ===== */
+  .live-badge{
+    display:inline-flex; align-items:center; gap:6px; font-size:11px; font-weight:700;
+    color:var(--danger); letter-spacing:.07em; text-transform:uppercase;
+  }
+  .live-dot{width:7px; height:7px; border-radius:50%; background:var(--danger); animation:pulse 1.4s infinite;}
+
+  .result-row{margin-bottom:16px;}
+  .result-row .rname{display:flex; justify-content:space-between; align-items:center; margin-bottom:7px; gap:8px;}
+  .result-row .rname .left{display:flex; align-items:center; gap:8px; min-width:0;}
+  .result-row .rname .name{font-weight:700; font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .result-row .rname .pct{font-family:'JetBrains Mono',monospace; font-weight:600; font-size:13px; color:var(--ink-soft); flex-shrink:0;}
+  .gauge-track{height:12px; background:var(--surface-2); border-radius:8px; overflow:hidden; border:1px solid var(--border);}
+  .gauge-fill{
+    height:100%; border-radius:8px; background:linear-gradient(90deg, var(--primary), var(--primary-dark));
+    width:0%; transition:width 1s cubic-bezier(.2,.8,.2,1);
+  }
+  .result-row.leader .gauge-fill{background:linear-gradient(90deg, var(--accent), #d6900f);}
+  .result-row.leader .badge-crown{margin-right:2px;}
+  .vote-count{font-size:11px; color:var(--muted); margin-top:4px;}
+  .mini-photo{width:26px; height:26px; border-radius:8px; object-fit:cover; flex-shrink:0;}
+
+  .chart-card canvas{width:100% !important; max-height:240px;}
+
+  .empty-state{text-align:center; padding:44px 20px; color:var(--muted);}
+  .empty-state .glyph{font-size:34px; margin-bottom:10px;}
+  .empty-state h3{color:var(--ink); margin-bottom:4px;}
+
+  /* ===== Admin lists ===== */
+  .toggle-row{display:flex; align-items:center; justify-content:space-between; padding:11px 0;}
+  .toggle-row .meta{padding-right:10px;}
+  .toggle-row .meta .t{font-weight:700; font-size:14px;}
+  .toggle-row .meta .d{font-size:12px; color:var(--muted); margin-top:2px;}
+  .switch{
+    width:46px; height:26px; background:var(--border); border-radius:999px; position:relative; cursor:pointer; flex-shrink:0; border:none;
+  }
+  .switch.on{background:var(--primary);}
+  .switch::after{
+    content:""; position:absolute; top:2px; left:2px; width:22px; height:22px; background:#fff; border-radius:50%;
+    transition:.18s; box-shadow:0 1px 3px rgba(0,0,0,0.3);
+  }
+  .switch.on::after{left:22px;}
+  .divider{border:none; border-top:1px solid var(--border); margin:14px 0;}
+  .small-muted{font-size:12px; color:var(--muted);}
+
+  .position-admin-card{border:1px solid var(--border); border-radius:14px; padding:14px; margin-bottom:10px; background:var(--surface-2);}
+  .position-admin-card .ph{display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;}
+  .position-admin-card .ph strong{font-size:14.5px; font-family:'Sora',sans-serif;}
+  .candidate-admin-row{display:flex; align-items:center; gap:10px; margin-bottom:7px; background:var(--surface); padding:9px; border-radius:11px; border:1px solid var(--border);}
+  .candidate-admin-row .cand-photo, .candidate-admin-row .cand-photo-fallback{width:34px; height:34px; border-radius:9px; font-size:13px;}
+  .candidate-admin-row span.nm{flex:1; font-size:13.5px; font-weight:600;}
+  .icon-btn-sm{background:none; border:none; cursor:pointer; color:var(--muted); font-size:15px; padding:4px; flex-shrink:0;}
+  .icon-btn-sm.danger{color:var(--danger);}
+  .row-flex{display:flex; gap:8px; margin-bottom:8px; align-items:flex-start;}
+  .row-flex input{margin-bottom:0;}
+  .photo-pick-btn{
+    width:46px; height:46px; border-radius:11px; border:1.5px dashed var(--border); background:var(--surface);
+    display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; overflow:hidden; font-size:16px; color:var(--muted);
+  }
+  .photo-pick-btn img{width:100%; height:100%; object-fit:cover;}
+
+  .footer-credit{text-align:center; font-size:11px; color:var(--muted); margin-top:10px; opacity:.7;}
+
+  /* ===== Print / PDF styles ===== */
+  @media print{
+    .topbar, .submit-bar, .icon-btn, .pill, .nav-pills, .no-print{display:none !important;}
+    body{background:#fff !important; color:#111 !important;}
+    .wrap{max-width:100% !important; padding:0 !important;}
+    .card{box-shadow:none !important; border:1px solid #ccc !important; break-inside:avoid;}
+    .gauge-fill{background:#444 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+    .result-row.leader .gauge-fill{background:#b8860b !important;}
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:0.01ms !important; transition-duration:0.01ms !important;}
+  }
+
+  /* hidden file inputs */
+  .hidden-file-input{display:none;}
+</style>
+</head>
+<body>
+
+<div id="app"></div>
+
+<div class="seal-overlay" id="sealOverlay">
+  <div class="check-stamp">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="M20 6L9 17l-5-5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </div>
+  <div class="confirm-text">വോട്ട് രേഖപ്പെടുത്തി</div>
+  <div class="confirm-sub">Your vote has been recorded</div>
+</div>
+
+<input type="file" id="logoFileInput" class="hidden-file-input" accept="image/*">
+<input type="file" id="candPhotoFileInput" class="hidden-file-input" accept="image/*">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<script>
+/* ============================================================
+   ELECTION DASHBOARD — pure localStorage, single admin
+   ============================================================ */
+
+const LS_KEY = "electionDashboardState_v1";
+const ADMIN_USER_DEFAULT = "admin";
+const ADMIN_PASS_DEFAULT = "election2026";
+
+function uid(){ return Math.random().toString(36).slice(2,9); }
+function esc(s){ return (s||"").toString().replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
+let state = {
+  electionTitle: "Student Council Election 2026",
+  instituteName: "",
+  logoDataUrl: null,
+  theme: "light",
+  adminUser: ADMIN_USER_DEFAULT,
+  adminPass: ADMIN_PASS_DEFAULT,
+  positions: [], // {id, title, candidates:[{id,name,symbol,photo,votes}]}
+  votingOpen: true,
+  resultsLive: false,
+  startTime: null, // ISO
+  endTime: null,   // ISO
+  useSchedule: false
+};
+
+function loadLocal(){
+  try{
+    const raw = localStorage.getItem(LS_KEY);
+    if(raw) state = { ...state, ...JSON.parse(raw) };
+  }catch(e){}
+}
+function saveLocal(){
+  try{ localStorage.setItem(LS_KEY, JSON.stringify(state)); }catch(e){ console.warn("save failed", e); }
+}
+function sd(){ saveLocal(); }
+
+/* ---------------- Router/UI state ---------------- */
+let view = "vote"; // vote | results | admin-login | admin
+let isAdmin = false;
+let justVoted = false; // session-only flag, resets when "next voter" is tapped
+let selections = {};
+let adminUserInputVal = "", adminPassInputVal = "", loginError = "";
+let chartInstances = {};
+
+function setView(v){ view = v; render(); }
+
+function applyTheme(){
+  document.documentElement.setAttribute("data-theme", state.theme === "dark" ? "dark" : "light");
+}
+function toggleTheme(){
+  state.theme = state.theme === "dark" ? "light" : "dark";
+  sd(); applyTheme(); render();
+}
+
+/* ---------------- Schedule logic ---------------- */
+function nowWithinSchedule(){
+  if(!state.useSchedule) return true;
+  const now = Date.now();
+  const s = state.startTime ? new Date(state.startTime).getTime() : null;
+  const e = state.endTime ? new Date(state.endTime).getTime() : null;
+  if(s && now < s) return false;
+  if(e && now > e) return false;
+  return true;
+}
+function scheduleStatusLabel(){
+  if(!state.useSchedule) return null;
+  const now = Date.now();
+  const s = state.startTime ? new Date(state.startTime).getTime() : null;
+  const e = state.endTime ? new Date(state.endTime).getTime() : null;
+  if(s && now < s) return { phase:"upcoming", text:`Voting starts: ${fmtDateTime(state.startTime)}` };
+  if(e && now > e) return { phase:"ended", text:`Voting ended: ${fmtDateTime(state.endTime)}` };
+  if(e) return { phase:"open", text:`Voting closes: ${fmtDateTime(state.endTime)}` };
+  return { phase:"open", text:"Voting is open" };
+}
+function fmtDateTime(iso){
+  if(!iso) return "";
+  try{
+    const d = new Date(iso);
+    return d.toLocaleString('en-GB', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+  }catch(e){ return iso; }
+}
+
+function votingIsActuallyOpen(){
+  return state.votingOpen && nowWithinSchedule();
+}
+
+/* ---------------- Voting logic ---------------- */
+function hasVoted(){ return justVoted; }
+function selectCandidate(posId, candId){
+  if(hasVoted() || !votingIsActuallyOpen()) return;
+  selections[posId] = candId;
+  render();
+}
+function allPositionsSelected(){
+  return state.positions.length > 0 && state.positions.every(p => selections[p.id]);
+}
+function submitVote(){
+  if(!allPositionsSelected()) return;
+  state.positions.forEach(p=>{
+    const cid = selections[p.id];
+    const cand = p.candidates.find(c=>c.id===cid);
+    if(cand) cand.votes = (cand.votes||0) + 1;
+  });
+  justVoted = true;
+  sd();
+
+  const overlay = document.getElementById("sealOverlay");
+  overlay.classList.add("show");
+  setTimeout(()=>{
+    overlay.classList.remove("show");
+    // Reset for the next voter on this same device automatically
+    selections = {};
+    justVoted = false;
+    setView("vote");
+  }, 1500);
+}
+
+/* ---------------- Admin logic ---------------- */
+function tryAdminLogin(){
+  if(adminUserInputVal === state.adminUser && adminPassInputVal === state.adminPass){
+    isAdmin = true; loginError=""; setView("admin");
+  } else {
+    loginError = "തെറ്റായ യൂസർനെയിം അല്ലെങ്കിൽ പാസ്‌വേഡ്";
+    render();
+  }
+}
+function logoutAdmin(){ isAdmin=false; setView("vote"); }
+
+function addPosition(title){
+  if(!title || !title.trim()) return;
+  state.positions.push({ id: uid(), title: title.trim(), candidates: [] });
+  sd(); render();
+}
+function removePosition(posId){
+  if(!confirm("ഈ പോസ്റ്റ് നീക്കം ചെയ്യണോ?")) return;
+  state.positions = state.positions.filter(p=>p.id!==posId);
+  sd(); render();
+}
+function addCandidate(posId, name, symbol, photoDataUrl){
+  if(!name || !name.trim()) return;
+  const pos = state.positions.find(p=>p.id===posId);
+  if(!pos) return;
+  pos.candidates.push({ id: uid(), name: name.trim(), symbol: (symbol||"").trim().slice(0,2), photo: photoDataUrl || null, votes:0 });
+  sd(); render();
+}
+function removeCandidate(posId, candId){
+  const pos = state.positions.find(p=>p.id===posId);
+  if(!pos) return;
+  pos.candidates = pos.candidates.filter(c=>c.id!==candId);
+  sd(); render();
+}
+function toggleVoting(){ state.votingOpen = !state.votingOpen; sd(); render(); }
+function toggleResultsLive(){ state.resultsLive = !state.resultsLive; sd(); render(); }
+function toggleSchedule(){ state.useSchedule = !state.useSchedule; sd(); render(); }
+function resetAllVotes(){
+  if(!confirm("എല്ലാ വോട്ടുകളും റീസെറ്റ് ചെയ്യണോ? ഇത് തിരികെ എടുക്കാൻ കഴിയില്ല.")) return;
+  state.positions.forEach(p=> p.candidates.forEach(c=> c.votes = 0));
+  sd(); render();
+}
+function updateTitle(t){ state.electionTitle = t; sd(); }
+function updateInstitute(t){ state.instituteName = t; sd(); }
+function updateStartTime(t){ state.startTime = t || null; sd(); render(); }
+function updateEndTime(t){ state.endTime = t || null; sd(); render(); }
+function updateAdminUser(t){ state.adminUser = t || ADMIN_USER_DEFAULT; sd(); }
+function updateAdminPass(t){ state.adminPass = t || ADMIN_PASS_DEFAULT; sd(); }
+
+/* ---------------- File -> DataURL helper ---------------- */
+function fileToDataUrl(file, maxDim, cb){
+  const reader = new FileReader();
+  reader.onload = function(e){
+    const img = new Image();
+    img.onload = function(){
+      let { width, height } = img;
+      if(width > maxDim || height > maxDim){
+        if(width > height){ height = Math.round(height * maxDim/width); width = maxDim; }
+        else { width = Math.round(width * maxDim/height); height = maxDim; }
+      }
+      const canvas = document.createElement("canvas");
+      canvas.width = width; canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, width, height);
+      cb(canvas.toDataURL("image/jpeg", 0.82));
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+let pendingCandPhotoTarget = null; // {posId, inputElId}
+let pendingCandPhotos = {}; // posId -> dataUrl (for new candidate form)
+
+/* ---------------- Render: top bar ---------------- */
+function topbarHtml(){
+  return `
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-logo">
+        ${state.logoDataUrl ? `<img src="${state.logoDataUrl}" alt="logo">` : `<span class="fallback">${esc((state.instituteName||"EL").slice(0,2).toUpperCase())}</span>`}
+      </div>
+      <div class="brand-text">
+        <span class="eyebrow">${esc(state.instituteName || "Election")}</span>
+        <span class="title">${esc(state.electionTitle)}</span>
+      </div>
+    </div>
+    <div class="top-actions">
+      <button class="icon-btn no-print" id="themeToggleBtn" title="Theme">${state.theme==='dark' ? '☀️' : '🌙'}</button>
+    </div>
+  </div>
+  <div class="wrap" style="padding-bottom:0;">
+    <div class="nav-pills no-print" style="margin-bottom:14px;">
+      <button class="pill ${view==='vote'?'active':''}" data-nav="vote">വോട്ട്</button>
+      <button class="pill ${view==='results'?'active':''}" data-nav="results">റിസൾട്ട്</button>
+      <button class="pill ${(view==='admin'||view==='admin-login')?'active':''}" data-nav="${isAdmin?'admin':'admin-login'}">അഡ്മിൻ</button>
+    </div>
+  </div>`;
+}
+
+function statusStripHtml(){
+  const sched = scheduleStatusLabel();
+  const open = votingIsActuallyOpen();
+  let text = open ? "വോട്ടിംഗ് തുറന്നിരിക്കുന്നു" : "വോട്ടിംഗ് അടച്ചിരിക്കുന്നു";
+  let timeText = sched ? sched.text : "";
+  return `<div class="status-strip ${open?'open':'closed'}">
+    <span class="status-dot ${open?'open':'closed'}"></span>
+    <span class="label">${text}</span>
+    ${timeText ? `<span class="time">${esc(timeText)}</span>` : ""}
+  </div>`;
+}
+
+/* ---------------- Render: vote view ---------------- */
+function voteViewHtml(){
+  if(state.positions.length === 0){
+    return `<div class="wrap">
+      ${statusStripHtml()}
+      <div class="card empty-state">
+        <div class="glyph">🗳️</div>
+        <h3>തിരഞ്ഞെടുപ്പ് സജ്ജമാക്കിയിട്ടില്ല</h3>
+        <p class="small-muted">അഡ്മിൻ പോസ്റ്റുകളും കാൻഡിഡേറ്റുകളും ചേർക്കണം.</p>
+      </div>
+    </div>`;
+  }
+  const open = votingIsActuallyOpen();
+  if(!open){
+    return `<div class="wrap">
+      ${statusStripHtml()}
+      <div class="card empty-state">
+        <div class="glyph">🔒</div>
+        <h3>വോട്ടിംഗ് ലഭ്യമല്ല</h3>
+        <p class="small-muted">ദയവായി പിന്നീട് ശ്രമിക്കുക, അല്ലെങ്കിൽ റിസൾട്ട് പേജ് കാണുക.</p>
+      </div>
+    </div>`;
+  }
+
+  let html = `<div class="wrap">
+    ${statusStripHtml()}
+    <div class="ballot-header">
+      <div class="logo-circle">
+        ${state.logoDataUrl ? `<img src="${state.logoDataUrl}" alt="logo">` : `<span class="fallback">${esc((state.instituteName||"EL").slice(0,2).toUpperCase())}</span>`}
+      </div>
+      <div>
+        <h2>${esc(state.electionTitle)}</h2>
+        <div class="sub">${esc(state.instituteName || "Cast your vote for each position below")}</div>
+      </div>
+    </div>`;
+
+  state.positions.forEach(pos=>{
+    html += `<div class="card position-card">
+      <h3>${esc(pos.title)}</h3>
+      <div class="candidate-grid">`;
+    if(pos.candidates.length === 0){
+      html += `<p class="small-muted">കാൻഡിഡേറ്റുകൾ ചേർത്തിട്ടില്ല.</p>`;
+    } else {
+      pos.candidates.forEach(c=>{
+        const sel = selections[pos.id] === c.id;
+        html += `<div class="candidate-row ${sel?'selected':''}" data-select-pos="${pos.id}" data-select-cand="${c.id}">
+          ${c.photo ? `<img class="cand-photo" src="${c.photo}" alt="">` : `<div class="cand-photo-fallback">${esc(c.symbol || c.name.slice(0,1).toUpperCase())}</div>`}
+          <div style="flex:1; min-width:0;">
+            <div class="cand-name">${esc(c.name)}</div>
+            <div class="cand-meta">${esc(pos.title)}</div>
+          </div>
+          <div class="check-ring"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><path d="M20 6L9 17l-5-5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        </div>`;
+      });
+    }
+    html += `</div></div>`;
+  });
+
+  html += `</div>`;
+
+  const filled = state.positions.filter(p=>selections[p.id]).length;
+  html += `<div class="submit-bar no-print">
+    <div class="progress-txt mono">${filled} / ${state.positions.length} selected</div>
+    <button class="btn btn-primary btn-sm" id="submitVoteBtn" ${allPositionsSelected()?'':'disabled'}>വോട്ട് സമർപ്പിക്കുക</button>
+  </div>`;
+
+  return html;
+}
+
+/* ---------------- Render: results view ---------------- */
+function resultsViewHtml(){
+  if(state.positions.length === 0){
+    return `<div class="wrap"><div class="card empty-state"><div class="glyph">📊</div><h3>റിസൾട്ട് ലഭ്യമല്ല</h3></div></div>`;
+  }
+  if(!state.resultsLive){
+    return `<div class="wrap"><div class="card empty-state">
+      <div class="glyph">⏳</div>
+      <h3>റിസൾട്ട് ഇതുവരെ പ്രസിദ്ധീകരിച്ചിട്ടില്ല</h3>
+      <p class="small-muted">വോട്ടെണ്ണൽ പൂർത്തിയാകുമ്പോൾ അഡ്മിൻ ഫലം പ്രസിദ്ധീകരിക്കും.</p>
+    </div></div>`;
+  }
+
+  let html = `<div class="wrap">
+    <div class="card" style="text-align:center;">
+      <span class="live-badge"><span class="live-dot"></span> Live Results</span>
+      <h2 style="font-size:19px;margin-top:8px;">${esc(state.electionTitle)}</h2>
+      <div class="small-muted" style="margin-top:2px;">${esc(state.instituteName || "")}</div>
+    </div>
+
+    <div class="btn-row no-print" style="margin-bottom:16px;">
+      <button class="btn btn-outline btn-sm" id="downloadPdfBtn" style="flex:1;">📄 PDF ഡൗൺലോഡ്</button>
+    </div>`;
+
+  state.positions.forEach(pos=>{
+    const total = pos.candidates.reduce((s,c)=>s+(c.votes||0),0);
+    const maxVotes = Math.max(0, ...pos.candidates.map(c=>c.votes||0));
+    const chartId = `chart_${pos.id}`;
+
+    html += `<div class="card">
+      <div class="eyebrow">${esc(pos.title)}</div>`;
+    if(pos.candidates.length===0){
+      html += `<p class="small-muted">കാൻഡിഡേറ്റുകൾ ഇല്ല.</p>`;
+    } else {
+      const sorted = [...pos.candidates].sort((a,b)=>(b.votes||0)-(a.votes||0));
+      sorted.forEach(c=>{
+        const pct = total>0 ? Math.round(((c.votes||0)/total)*100) : 0;
+        const isLeader = total>0 && (c.votes||0)===maxVotes && maxVotes>0;
+        html += `<div class="result-row ${isLeader?'leader':''}">
+          <div class="rname">
+            <div class="left">
+              ${c.photo ? `<img class="mini-photo" src="${c.photo}" alt="">` : ``}
+              ${isLeader ? `<span class="badge-crown">🏆</span>` : ``}
+              <span class="name">${esc(c.name)}</span>
+            </div>
+            <span class="pct">${pct}%</span>
+          </div>
+          <div class="gauge-track"><div class="gauge-fill" data-width="${pct}" style="width:0%"></div></div>
+          <div class="vote-count mono">${c.votes||0} votes</div>
+        </div>`;
+      });
+      html += `<div class="small-muted mono" style="margin-top:6px; margin-bottom:14px;">Total votes: ${total}</div>
+      <div class="chart-card"><canvas id="${chartId}" data-pos-id="${pos.id}"></canvas></div>`;
+    }
+    html += `</div>`;
+  });
+
+  html += `<div class="footer-credit">Generated ${esc(new Date().toLocaleString('en-GB'))}</div></div>`;
+  return html;
+}
+
+/* ---------------- Render: admin login ---------------- */
+function adminLoginHtml(){
+  return `<div class="login-screen">
+    <div class="login-card">
+      <div class="seal">
+        ${state.logoDataUrl ? `<img src="${state.logoDataUrl}" alt="logo">` : `<span class="fallback">EL</span>`}
+      </div>
+      <h1>അഡ്മിൻ ലോഗിൻ</h1>
+      <p>തിരഞ്ഞെടുപ്പ് മാനേജ് ചെയ്യാൻ ലോഗിൻ ചെയ്യുക</p>
+      <label>യൂസർനെയിം</label>
+      <input type="text" id="adminUserInput" value="${esc(adminUserInputVal)}" autocomplete="username">
+      <label>പാസ്‌വേഡ്</label>
+      <input type="password" id="adminPassInput" value="${esc(adminPassInputVal)}" autocomplete="current-password">
+      <div class="error-text">${esc(loginError)}</div>
+      <button class="btn btn-primary" id="adminLoginBtn">ലോഗിൻ ചെയ്യുക</button>
+      <button class="btn btn-ghost" data-nav="vote" style="margin-top:10px;">തിരികെ വോട്ടിംഗിലേക്ക്</button>
+    </div>
+  </div>`;
+}
+
+/* ---------------- Render: admin dashboard ---------------- */
+function adminViewHtml(){
+  const totalVotes = state.positions.reduce((s,p)=> s + p.candidates.reduce((s2,c)=>s2+(c.votes||0),0), 0);
+  const totalCandidates = state.positions.reduce((s,p)=> s + p.candidates.length, 0);
+
+  let html = `<div class="wrap">
+
+    <div class="stat-grid">
+      <div class="stat-card accent-primary">
+        <div class="num mono">${state.positions.length}</div>
+        <div class="lbl">Positions</div>
+      </div>
+      <div class="stat-card accent-success">
+        <div class="num mono">${totalCandidates}</div>
+        <div class="lbl">Candidates</div>
+      </div>
+      <div class="stat-card accent-accent">
+        <div class="num mono">${totalVotes}</div>
+        <div class="lbl">Total Votes Cast</div>
+      </div>
+      <div class="stat-card ${votingIsActuallyOpen() ? 'accent-success' : 'accent-danger'}">
+        <div class="num" style="font-size:16px;">${votingIsActuallyOpen() ? 'OPEN' : 'CLOSED'}</div>
+        <div class="lbl">Voting Status</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="eyebrow">Branding</div>
+      <label>തിരഞ്ഞെടുപ്പ് പേര്</label>
+      <input type="text" id="titleInput" value="${esc(state.electionTitle)}">
+      <label>സ്ഥാപനത്തിന്റെ പേര് (School/Madrasa)</label>
+      <input type="text" id="instituteInput" value="${esc(state.instituteName)}" placeholder="School name">
+      <label>ലോഗോ</label>
+      ${state.logoDataUrl
+        ? `<div class="upload-preview">
+             <img src="${state.logoDataUrl}" alt="logo">
+             <div class="meta"><div class="nm">Logo uploaded</div><div class="sz">Tap to replace</div></div>
+             <button class="icon-btn-sm danger" id="removeLogoBtn">✕</button>
+           </div>`
+        : `<div class="upload-box" id="logoUploadBox">
+             <div class="icon">🏫</div>
+             <div class="txt">ലോഗോ അപ്‌ലോഡ് ചെയ്യാൻ ടാപ്പ് ചെയ്യുക</div>
+           </div>`}
+    </div>
+
+    <div class="card">
+      <div class="eyebrow">Election Controls</div>
+      <div class="toggle-row">
+        <div class="meta">
+          <div class="t">വോട്ടിംഗ് തുറന്നിരിക്കുന്നു</div>
+          <div class="d">വിദ്യാർത്ഥികൾക്ക് വോട്ട് ചെയ്യാൻ കഴിയും</div>
+        </div>
+        <button class="switch ${state.votingOpen?'on':''}" id="toggleVotingBtn"></button>
+      </div>
+      <hr class="divider">
+      <div class="toggle-row">
+        <div class="meta">
+          <div class="t">ലൈവ് റിസൾട്ട് പ്രസിദ്ധീകരിക്കുക</div>
+          <div class="d">എല്ലാവർക്കും ഫലം കാണാൻ കഴിയും</div>
+        </div>
+        <button class="switch ${state.resultsLive?'on':''}" id="toggleResultsBtn"></button>
+      </div>
+      <hr class="divider">
+      <div class="toggle-row">
+        <div class="meta">
+          <div class="t">സമയം നിശ്ചയിക്കുക (Start/End)</div>
+          <div class="d">നിശ്ചിത സമയത്ത് മാത്രം വോട്ടിംഗ് തുറക്കും</div>
+        </div>
+        <button class="switch ${state.useSchedule?'on':''}" id="toggleScheduleBtn"></button>
+      </div>
+      ${state.useSchedule ? `
+        <label style="margin-top:10px;">തുടങ്ങുന്ന സമയം</label>
+        <input type="datetime-local" id="startTimeInput" value="${state.startTime ? state.startTime.slice(0,16) : ''}">
+        <label>അവസാനിക്കുന്ന സമയം</label>
+        <input type="datetime-local" id="endTimeInput" value="${state.endTime ? state.endTime.slice(0,16) : ''}">
+      ` : ``}
+    </div>
+
+    <div class="card admin-section">
+      <div class="eyebrow">പോസ്റ്റുകളും കാൻഡിഡേറ്റുകളും</div>
+      <div class="row-flex">
+        <input type="text" id="newPosInput" placeholder="പുതിയ പോസ്റ്റ് (ഉദാ: Leader, Secretary)">
+        <button class="btn btn-primary btn-sm" id="addPosBtn">ചേർക്കുക</button>
+      </div>
+  `;
+
+  state.positions.forEach(pos=>{
+    html += `<div class="position-admin-card">
+      <div class="ph">
+        <strong>${esc(pos.title)}</strong>
+        <button class="icon-btn-sm danger" data-remove-pos="${pos.id}" title="നീക്കം ചെയ്യുക">✕</button>
+      </div>`;
+    pos.candidates.forEach(c=>{
+      html += `<div class="candidate-admin-row">
+        ${c.photo ? `<img class="cand-photo" src="${c.photo}" alt="">` : `<div class="cand-photo-fallback">${esc(c.symbol||c.name.slice(0,1).toUpperCase())}</div>`}
+        <span class="nm">${esc(c.name)}</span>
+        <span class="mono small-muted">${c.votes||0}v</span>
+        <button class="icon-btn-sm danger" data-remove-cand-pos="${pos.id}" data-remove-cand="${c.id}">✕</button>
+      </div>`;
+    });
+    const pendingPhoto = pendingCandPhotos[pos.id];
+    html += `<div class="row-flex" style="margin-top:10px; align-items:center;">
+        <button class="photo-pick-btn" data-pick-photo-pos="${pos.id}">${pendingPhoto ? `<img src="${pendingPhoto}">` : '📷'}</button>
+        <input type="text" placeholder="പേര്" id="candName-${pos.id}" style="flex:2;">
+        <button class="btn btn-outline btn-sm" data-add-cand="${pos.id}">+</button>
+      </div>
+    </div>`;
+  });
+
+  html += `</div>
+
+    <div class="card">
+      <div class="eyebrow">Admin Login</div>
+      <label>യൂസർനെയിം</label>
+      <input type="text" id="adminUserSettingInput" value="${esc(state.adminUser)}">
+      <label>പാസ്‌വേഡ്</label>
+      <input type="text" id="adminPassSettingInput" value="${esc(state.adminPass)}">
+      <div class="small-muted">ഈ ക്രെഡൻഷ്യലുകൾ ഉപയോഗിച്ച് മാത്രമേ അഡ്മിൻ പാനൽ ആക്സസ് ചെയ്യാൻ കഴിയൂ.</div>
+    </div>
+
+    <div class="card">
+      <div class="eyebrow" style="color:var(--danger);">Danger Zone</div>
+      <div class="btn-row">
+        <button class="btn btn-outline" id="resetVotesBtn" style="border-color:var(--danger); color:var(--danger);">എല്ലാ വോട്ടുകളും റീസെറ്റ് ചെയ്യുക</button>
+      </div>
+      <div class="btn-row" style="margin-top:8px;">
+        <button class="btn btn-ghost" id="logoutBtn">ലോഗ്ഔട്ട്</button>
+      </div>
+    </div>
+
+    <div class="footer-credit">Single-admin mode · Data stored on this device</div>
+  </div>`;
+  return html;
+}
+
+/* ---------------- Main render ---------------- */
+function render(){
+  applyTheme();
+  const app = document.getElementById("app");
+
+  if(view === "admin-login" && !isAdmin){
+    app.innerHTML = adminLoginHtml();
+    bindEvents();
+    return;
+  }
+  if(view === "admin" && !isAdmin){
+    view = "admin-login";
+    app.innerHTML = adminLoginHtml();
+    bindEvents();
+    return;
+  }
+
+  let body = "";
+  if(view === "vote") body = voteViewHtml();
+  else if(view === "results") body = resultsViewHtml();
+  else if(view === "admin") body = adminViewHtml();
+
+  app.innerHTML = topbarHtml() + body;
+  bindEvents();
+
+  requestAnimationFrame(()=>{
+    document.querySelectorAll(".gauge-fill").forEach(el=>{
+      const w = el.getAttribute("data-width");
+      requestAnimationFrame(()=> el.style.width = w + "%");
+    });
+    if(view === "results") renderCharts();
+  });
+}
+
+/* ---------------- Charts ---------------- */
+function renderCharts(){
+  Object.values(chartInstances).forEach(ch => { try{ ch.destroy(); }catch(e){} });
+  chartInstances = {};
+  if(typeof Chart === "undefined") return;
+
+  const isDark = state.theme === "dark";
+  const gridColor = isDark ? "rgba(255,255,255,0.08)" : "rgba(21,25,43,0.07)";
+  const textColor = isDark ? "#B7BACB" : "#4A4F66";
+
+  state.positions.forEach(pos=>{
+    const canvas = document.getElementById(`chart_${pos.id}`);
+    if(!canvas || pos.candidates.length === 0) return;
+    const sorted = [...pos.candidates].sort((a,b)=>(b.votes||0)-(a.votes||0));
+    const colors = ["#3F5BF6","#F5A623","#1FAE6B","#E0455A","#8A8FA3","#6C82FF"];
+    const ctx = canvas.getContext("2d");
+    chartInstances[pos.id] = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: sorted.map(c=>c.name),
+        datasets: [{
+          data: sorted.map(c=>c.votes||0),
+          backgroundColor: sorted.map((_,i)=>colors[i % colors.length]),
+          borderRadius: 8,
+          maxBarThickness: 40
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display:false } },
+        scales: {
+          x: { ticks:{ color:textColor, font:{family:'Inter'} }, grid:{ display:false } },
+          y: { beginAtZero:true, ticks:{ color:textColor, stepSize:1, precision:0 }, grid:{ color:gridColor } }
+        }
+      }
+    });
+  });
+}
+
+/* ---------------- PDF download (print-based) ---------------- */
+function downloadResultsPdf(){
+  window.print();
+}
+
+/* ---------------- Event binding ---------------- */
+function bindEvents(){
+  document.querySelectorAll("[data-nav]").forEach(el=>{
+    el.addEventListener("click", ()=> setView(el.getAttribute("data-nav")));
+  });
+  document.querySelectorAll("[data-select-pos]").forEach(el=>{
+    el.addEventListener("click", ()=> selectCandidate(el.getAttribute("data-select-pos"), el.getAttribute("data-select-cand")));
+  });
+  const submitBtn = document.getElementById("submitVoteBtn");
+  if(submitBtn) submitBtn.addEventListener("click", submitVote);
+
+  const themeToggleBtn = document.getElementById("themeToggleBtn");
+  if(themeToggleBtn) themeToggleBtn.addEventListener("click", toggleTheme);
+
+  const downloadPdfBtn = document.getElementById("downloadPdfBtn");
+  if(downloadPdfBtn) downloadPdfBtn.addEventListener("click", downloadResultsPdf);
+
+  // Admin login
+  const adminUserInput = document.getElementById("adminUserInput");
+  const adminPassInput = document.getElementById("adminPassInput");
+  if(adminUserInput) adminUserInput.addEventListener("input", e=> adminUserInputVal = e.target.value);
+  if(adminPassInput) adminPassInput.addEventListener("input", e=> adminPassInputVal = e.target.value);
+  const adminLoginBtn = document.getElementById("adminLoginBtn");
+  if(adminLoginBtn) adminLoginBtn.addEventListener("click", tryAdminLogin);
+  if(adminPassInput) adminPassInput.addEventListener("keydown", e=>{ if(e.key==="Enter") tryAdminLogin(); });
+
+  // Admin dashboard
+  const titleInput = document.getElementById("titleInput");
+  if(titleInput) titleInput.addEventListener("change", e=> updateTitle(e.target.value));
+  const instituteInput = document.getElementById("instituteInput");
+  if(instituteInput) instituteInput.addEventListener("change", e=> updateInstitute(e.target.value));
+
+  const logoUploadBox = document.getElementById("logoUploadBox");
+  if(logoUploadBox) logoUploadBox.addEventListener("click", ()=> document.getElementById("logoFileInput").click());
+  const removeLogoBtn = document.getElementById("removeLogoBtn");
+  if(removeLogoBtn) removeLogoBtn.addEventListener("click", ()=>{ state.logoDataUrl = null; sd(); render(); });
+
+  const toggleVotingBtn = document.getElementById("toggleVotingBtn");
+  if(toggleVotingBtn) toggleVotingBtn.addEventListener("click", toggleVoting);
+  const toggleResultsBtn = document.getElementById("toggleResultsBtn");
+  if(toggleResultsBtn) toggleResultsBtn.addEventListener("click", toggleResultsLive);
+  const toggleScheduleBtn = document.getElementById("toggleScheduleBtn");
+  if(toggleScheduleBtn) toggleScheduleBtn.addEventListener("click", toggleSchedule);
+
+  const startTimeInput = document.getElementById("startTimeInput");
+  if(startTimeInput) startTimeInput.addEventListener("change", e=> updateStartTime(e.target.value));
+  const endTimeInput = document.getElementById("endTimeInput");
+  if(endTimeInput) endTimeInput.addEventListener("change", e=> updateEndTime(e.target.value));
+
+  const addPosBtn = document.getElementById("addPosBtn");
+  if(addPosBtn) addPosBtn.addEventListener("click", ()=>{
+    const input = document.getElementById("newPosInput");
+    addPosition(input.value);
+    input.value="";
+  });
+  document.querySelectorAll("[data-remove-pos]").forEach(el=>{
+    el.addEventListener("click", ()=>removePosition(el.getAttribute("data-remove-pos")));
+  });
+  document.querySelectorAll("[data-pick-photo-pos]").forEach(el=>{
+    el.addEventListener("click", ()=>{
+      pendingCandPhotoTarget = el.getAttribute("data-pick-photo-pos");
+      document.getElementById("candPhotoFileInput").click();
+    });
+  });
+  document.querySelectorAll("[data-add-cand]").forEach(el=>{
+    const posId = el.getAttribute("data-add-cand");
+    el.addEventListener("click", ()=>{
+      const nameInput = document.getElementById(`candName-${posId}`);
+      const photoUrl = pendingCandPhotos[posId] || null;
+      addCandidate(posId, nameInput.value, "", photoUrl);
+      delete pendingCandPhotos[posId];
+    });
+  });
+  document.querySelectorAll("[data-remove-cand]").forEach(el=>{
+    el.addEventListener("click", ()=> removeCandidate(el.getAttribute("data-remove-cand-pos"), el.getAttribute("data-remove-cand")));
+  });
+
+  const adminUserSettingInput = document.getElementById("adminUserSettingInput");
+  if(adminUserSettingInput) adminUserSettingInput.addEventListener("change", e=> updateAdminUser(e.target.value));
+  const adminPassSettingInput = document.getElementById("adminPassSettingInput");
+  if(adminPassSettingInput) adminPassSettingInput.addEventListener("change", e=> updateAdminPass(e.target.value));
+
+  const resetVotesBtn = document.getElementById("resetVotesBtn");
+  if(resetVotesBtn) resetVotesBtn.addEventListener("click", resetAllVotes);
+  const logoutBtn = document.getElementById("logoutBtn");
+  if(logoutBtn) logoutBtn.addEventListener("click", logoutAdmin);
+}
+
+/* ---------------- Global file inputs ---------------- */
+document.getElementById("logoFileInput").addEventListener("change", function(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  fileToDataUrl(file, 300, (dataUrl)=>{
+    state.logoDataUrl = dataUrl;
+    sd(); render();
+  });
+  e.target.value = "";
+});
+
+document.getElementById("candPhotoFileInput").addEventListener("change", function(e){
+  const file = e.target.files[0];
+  if(!file || !pendingCandPhotoTarget) return;
+  fileToDataUrl(file, 240, (dataUrl)=>{
+    pendingCandPhotos[pendingCandPhotoTarget] = dataUrl;
+    pendingCandPhotoTarget = null;
+    render();
+  });
+  e.target.value = "";
+});
+
+/* ---------------- Init ---------------- */
+(function init(){
+  loadLocal();
+  applyTheme();
+  render();
+  // periodic refresh so schedule-based open/close state updates live
+  setInterval(()=>{ if(state.useSchedule) render(); }, 30000);
+})();
+</script>
+</body>
+</html>
