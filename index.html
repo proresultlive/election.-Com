@@ -866,11 +866,11 @@ function adminShellHtml(){
     </div>
     <div class="admin-main">
       <div class="admin-topbar">
-        <div>
+        <button class="icon-btn sidebar-toggle-btn" id="sidebarToggleBtn">☰</button>
+        <div style="flex:1; min-width:0;">
           <div class="welcome">${adminTab==='dashboard'?'Welcome, Admin':items.find(i=>i.id===adminTab)?.label || ''}</div>
           <div class="sub">${esc(state.electionTitle)}</div>
         </div>
-        <button class="icon-btn sidebar-toggle-btn" id="sidebarToggleBtn">☰</button>
         <button class="icon-btn" id="themeToggleBtn" title="Theme">${state.theme==='dark' ? '☀️' : '🌙'}</button>
       </div>
       <div class="admin-content">
