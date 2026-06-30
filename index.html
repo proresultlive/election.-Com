@@ -436,7 +436,7 @@
   <div class="check-stamp">
     <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="M20 6L9 17l-5-5" stroke-linecap="round" stroke-linejoin="round"/></svg>
   </div>
-  <div class="confirm-text">വോട്ട് രേഖപ്പെടുത്തി</div>
+  <div class="confirm-text">Vote Recorded</div>
   <div class="confirm-sub">Your vote has been recorded</div>
 </div>
 
@@ -575,7 +575,7 @@ function tryAdminLogin(){
   if(u === (state.adminUser || "").trim() && p === (state.adminPass || "").trim()){
     isAdmin = true; loginError=""; setView("admin");
   } else {
-    loginError = "തെറ്റായ യൂസർനെയിം അല്ലെങ്കിൽ പാസ്‌വേഡ്";
+    loginError = "Incorrect username or password";
     render();
   }
 }
@@ -587,7 +587,7 @@ function addPosition(title){
   sd(); render();
 }
 function removePosition(posId){
-  if(!confirm("ഈ പോസ്റ്റ് നീക്കം ചെയ്യണോ?")) return;
+  if(!confirm("Remove this position?")) return;
   state.positions = state.positions.filter(p=>p.id!==posId);
   sd(); render();
 }
@@ -608,7 +608,7 @@ function toggleVoting(){ state.votingOpen = !state.votingOpen; sd(); render(); }
 function toggleResultsLive(){ state.resultsLive = !state.resultsLive; sd(); render(); }
 function toggleSchedule(){ state.useSchedule = !state.useSchedule; sd(); render(); }
 function resetAllVotes(){
-  if(!confirm("എല്ലാ വോട്ടുകളും റീസെറ്റ് ചെയ്യണോ? ഇത് തിരികെ എടുക്കാൻ കഴിയില്ല.")) return;
+  if(!confirm("Reset all votes? This cannot be undone.")) return;
   state.positions.forEach(p=> p.candidates.forEach(c=> c.votes = 0));
   sd(); render();
 }
@@ -663,9 +663,9 @@ function topbarHtml(){
   </div>
   <div class="wrap" style="padding-bottom:0;">
     <div class="nav-pills no-print" style="margin-bottom:14px;">
-      <button class="pill ${view==='vote'?'active':''}" data-nav="vote">വോട്ട്</button>
-      <button class="pill ${view==='results'?'active':''}" data-nav="results">റിസൾട്ട്</button>
-      <button class="pill ${(view==='admin'||view==='admin-login')?'active':''}" data-nav="${isAdmin?'admin':'admin-login'}">അഡ്മിൻ</button>
+      <button class="pill ${view==='vote'?'active':''}" data-nav="vote">Vote</button>
+      <button class="pill ${view==='results'?'active':''}" data-nav="results">Results</button>
+      <button class="pill ${(view==='admin'||view==='admin-login')?'active':''}" data-nav="${isAdmin?'admin':'admin-login'}">Admin</button>
     </div>
   </div>`;
 }
@@ -673,7 +673,7 @@ function topbarHtml(){
 function statusStripHtml(){
   const sched = scheduleStatusLabel();
   const open = votingIsActuallyOpen();
-  let text = open ? "വോട്ടിംഗ് തുറന്നിരിക്കുന്നു" : "വോട്ടിംഗ് അടച്ചിരിക്കുന്നു";
+  let text = open ? "Voting is open" : "Voting is closed";
   let timeText = sched ? sched.text : "";
   return `<div class="status-strip ${open?'open':'closed'}">
     <span class="status-dot ${open?'open':'closed'}"></span>
@@ -689,8 +689,8 @@ function voteViewHtml(){
       ${statusStripHtml()}
       <div class="card empty-state">
         <div class="glyph">🗳️</div>
-        <h3>തിരഞ്ഞെടുപ്പ് സജ്ജമാക്കിയിട്ടില്ല</h3>
-        <p class="small-muted">അഡ്മിൻ പോസ്റ്റുകളും കാൻഡിഡേറ്റുകളും ചേർക്കണം.</p>
+        <h3>Election not set up yet</h3>
+        <p class="small-muted">Admin needs to add positions and candidates.</p>
       </div>
     </div>`;
   }
@@ -700,8 +700,8 @@ function voteViewHtml(){
       ${statusStripHtml()}
       <div class="card empty-state">
         <div class="glyph">🔒</div>
-        <h3>വോട്ടിംഗ് ലഭ്യമല്ല</h3>
-        <p class="small-muted">ദയവായി പിന്നീട് ശ്രമിക്കുക, അല്ലെങ്കിൽ റിസൾട്ട് പേജ് കാണുക.</p>
+        <h3>Voting not available</h3>
+        <p class="small-muted">Please try again later, or check the results page.</p>
       </div>
     </div>`;
   }
@@ -723,7 +723,7 @@ function voteViewHtml(){
       <h3>${esc(pos.title)}</h3>
       <div class="candidate-grid">`;
     if(pos.candidates.length === 0){
-      html += `<p class="small-muted">കാൻഡിഡേറ്റുകൾ ചേർത്തിട്ടില്ല.</p>`;
+      html += `<p class="small-muted">No candidates added.</p>`;
     } else {
       pos.candidates.forEach(c=>{
         const sel = selections[pos.id] === c.id;
@@ -745,7 +745,7 @@ function voteViewHtml(){
   const filled = state.positions.filter(p=>selections[p.id]).length;
   html += `<div class="submit-bar no-print">
     <div class="progress-txt mono">${filled} / ${state.positions.length} selected</div>
-    <button class="btn btn-primary btn-sm" id="submitVoteBtn" ${allPositionsSelected()?'':'disabled'}>വോട്ട് സമർപ്പിക്കുക</button>
+    <button class="btn btn-primary btn-sm" id="submitVoteBtn" ${allPositionsSelected()?'':'disabled'}>Submit Vote</button>
   </div>`;
 
   return html;
@@ -754,13 +754,13 @@ function voteViewHtml(){
 /* ---------------- Render: results view ---------------- */
 function resultsViewHtml(){
   if(state.positions.length === 0){
-    return `<div class="wrap"><div class="card empty-state"><div class="glyph">📊</div><h3>റിസൾട്ട് ലഭ്യമല്ല</h3></div></div>`;
+    return `<div class="wrap"><div class="card empty-state"><div class="glyph">📊</div><h3>Results not available</h3></div></div>`;
   }
   if(!state.resultsLive){
     return `<div class="wrap"><div class="card empty-state">
       <div class="glyph">⏳</div>
-      <h3>റിസൾട്ട് ഇതുവരെ പ്രസിദ്ധീകരിച്ചിട്ടില്ല</h3>
-      <p class="small-muted">വോട്ടെണ്ണൽ പൂർത്തിയാകുമ്പോൾ അഡ്മിൻ ഫലം പ്രസിദ്ധീകരിക്കും.</p>
+      <h3>Results not published yet</h3>
+      <p class="small-muted">Admin will publish the results once counting is complete.</p>
     </div></div>`;
   }
 
@@ -772,7 +772,7 @@ function resultsViewHtml(){
     </div>
 
     <div class="btn-row no-print" style="margin-bottom:16px;">
-      <button class="btn btn-outline btn-sm" id="downloadPdfBtn" style="flex:1;">📄 PDF ഡൗൺലോഡ്</button>
+      <button class="btn btn-outline btn-sm" id="downloadPdfBtn" style="flex:1;">📄 Download PDF</button>
     </div>`;
 
   state.positions.forEach(pos=>{
@@ -783,7 +783,7 @@ function resultsViewHtml(){
     html += `<div class="card">
       <div class="eyebrow">${esc(pos.title)}</div>`;
     if(pos.candidates.length===0){
-      html += `<p class="small-muted">കാൻഡിഡേറ്റുകൾ ഇല്ല.</p>`;
+      html += `<p class="small-muted">No candidates.</p>`;
     } else {
       const sorted = [...pos.candidates].sort((a,b)=>(b.votes||0)-(a.votes||0));
       sorted.forEach(c=>{
@@ -819,15 +819,15 @@ function adminLoginHtml(){
       <div class="seal">
         ${state.logoDataUrl ? `<img src="${state.logoDataUrl}" alt="logo">` : `<span class="fallback">EL</span>`}
       </div>
-      <h1>അഡ്മിൻ ലോഗിൻ</h1>
-      <p>തിരഞ്ഞെടുപ്പ് മാനേജ് ചെയ്യാൻ ലോഗിൻ ചെയ്യുക</p>
-      <label>യൂസർനെയിം</label>
+      <h1>Admin Login</h1>
+      <p>Login to manage the election</p>
+      <label>Username</label>
       <input type="text" id="adminUserInput" value="${esc(adminUserInputVal)}" autocomplete="username">
-      <label>പാസ്‌വേഡ്</label>
+      <label>Password</label>
       <input type="password" id="adminPassInput" value="${esc(adminPassInputVal)}" autocomplete="current-password">
       <div class="error-text">${esc(loginError)}</div>
-      <button class="btn btn-primary" id="adminLoginBtn">ലോഗിൻ ചെയ്യുക</button>
-      <button class="btn btn-ghost" data-nav="vote" style="margin-top:10px;">തിരികെ വോട്ടിംഗിലേക്ക്</button>
+      <button class="btn btn-primary" id="adminLoginBtn">Login</button>
+      <button class="btn btn-ghost" data-nav="vote" style="margin-top:10px;">Back to Voting</button>
     </div>
   </div>`;
 }
@@ -859,8 +859,8 @@ function adminShellHtml(){
         ${items.map(it => `<button class="sb-item ${adminTab===it.id?'active':''}" data-admin-tab="${it.id}"><span class="ic">${it.icon}</span> ${it.label}</button>`).join('')}
       </div>
       <div class="sb-footer">
-        <button class="sb-item" data-nav="vote"><span class="ic">↩️</span> Voting Screen-ലേക്ക്</button>
-        <button class="sb-item" id="logoutBtn"><span class="ic">🚪</span> ലോഗ്ഔട്ട്</button>
+        <button class="sb-item" data-nav="vote"><span class="ic">↩️</span> Voting Screen</button>
+        <button class="sb-item" id="logoutBtn"><span class="ic">🚪</span> Logout</button>
       </div>
     </div>
     <div class="admin-main">
@@ -907,12 +907,12 @@ function adminDashboardTab(){
     <div class="grid-2col">
       <div class="card">
         <div class="card-title">Votes by Position</div>
-        <div class="card-sub">ഓരോ പോസ്റ്റിലും ലഭിച്ച വോട്ടുകൾ</div>
+        <div class="card-sub">Votes received per position</div>
         <div class="chart-card"><canvas id="dashBarChart"></canvas></div>
       </div>
       <div class="card">
         <div class="card-title">Positions Filled</div>
-        <div class="card-sub">കാൻഡിഡേറ്റുകൾ ചേർത്ത പോസ്റ്റുകൾ</div>
+        <div class="card-sub">Positions with candidates added</div>
         <div class="donut-wrap">
           <canvas id="dashDonutChart"></canvas>
           <div class="donut-center-label">${state.positions.filter(p=>p.candidates.length>0).length}/${state.positions.length || 0}</div>
@@ -923,8 +923,8 @@ function adminDashboardTab(){
     <div class="card">
       <div class="card-title">Quick Actions</div>
       <div class="btn-row" style="margin-top:8px;">
-        <button class="btn btn-primary btn-sm" data-admin-tab="elections" style="flex:1;">+ പോസ്റ്റ്/കാൻഡിഡേറ്റ് ചേർക്കുക</button>
-        <button class="btn btn-outline btn-sm" data-nav="results" style="flex:1;">റിസൾട്ട് കാണുക</button>
+        <button class="btn btn-primary btn-sm" data-admin-tab="elections" style="flex:1;">+ Add Position/Candidate</button>
+        <button class="btn btn-outline btn-sm" data-nav="results" style="flex:1;">View Results</button>
       </div>
     </div>
     <div class="footer-credit">Single-admin mode · Data stored on this device</div>
@@ -937,44 +937,44 @@ function adminElectionsTab(){
       <div class="eyebrow">Election Controls</div>
       <div class="toggle-row">
         <div class="meta">
-          <div class="t">വോട്ടിംഗ് തുറന്നിരിക്കുന്നു</div>
-          <div class="d">വിദ്യാർത്ഥികൾക്ക് വോട്ട് ചെയ്യാൻ കഴിയും</div>
+          <div class="t">Voting is open</div>
+          <div class="d">Students will be able to vote</div>
         </div>
         <button class="switch ${state.votingOpen?'on':''}" id="toggleVotingBtn"></button>
       </div>
       <hr class="divider">
       <div class="toggle-row">
         <div class="meta">
-          <div class="t">ലൈവ് റിസൾട്ട് പ്രസിദ്ധീകരിക്കുക</div>
-          <div class="d">എല്ലാവർക്കും ഫലം കാണാൻ കഴിയും</div>
+          <div class="t">Publish Live Results</div>
+          <div class="d">Everyone will be able to see the results</div>
         </div>
         <button class="switch ${state.resultsLive?'on':''}" id="toggleResultsBtn"></button>
       </div>
       <hr class="divider">
       <div class="toggle-row">
         <div class="meta">
-          <div class="t">സമയം നിശ്ചയിക്കുക (Start/End)</div>
-          <div class="d">നിശ്ചിത സമയത്ത് മാത്രം വോട്ടിംഗ് തുറക്കും</div>
+          <div class="t">Schedule Voting (Start/End)</div>
+          <div class="d">Voting will open only during the set time window</div>
         </div>
         <button class="switch ${state.useSchedule?'on':''}" id="toggleScheduleBtn"></button>
       </div>
       ${state.useSchedule ? `
-        <label style="margin-top:10px;">തുടങ്ങുന്ന സമയം</label>
+        <label style="margin-top:10px;">Start Time</label>
         <input type="datetime-local" id="startTimeInput" value="${state.startTime ? state.startTime.slice(0,16) : ''}">
-        <label>അവസാനിക്കുന്ന സമയം</label>
+        <label>End Time</label>
         <input type="datetime-local" id="endTimeInput" value="${state.endTime ? state.endTime.slice(0,16) : ''}">
       ` : ``}
     </div>
 
     <div class="card">
-      <div class="eyebrow">തിരഞ്ഞെടുപ്പ് വിവരങ്ങൾ</div>
-      <label>തിരഞ്ഞെടുപ്പ് പേര്</label>
+      <div class="eyebrow">Election Details</div>
+      <label>Election Name</label>
       <input type="text" id="titleInput" value="${esc(state.electionTitle)}">
     </div>
 
     <div class="card">
       <div class="eyebrow" style="color:var(--danger);">Danger Zone</div>
-      <button class="btn btn-outline" id="resetVotesBtn" style="border-color:var(--danger); color:var(--danger);">എല്ലാ വോട്ടുകളും റീസെറ്റ് ചെയ്യുക</button>
+      <button class="btn btn-outline" id="resetVotesBtn" style="border-color:var(--danger); color:var(--danger);">Reset All Votes</button>
     </div>
   `;
   return html;
@@ -983,10 +983,10 @@ function adminElectionsTab(){
 function adminCandidatesTab(){
   let html = `
     <div class="card admin-section">
-      <div class="eyebrow">പോസ്റ്റുകളും കാൻഡിഡേറ്റുകളും</div>
+      <div class="eyebrow">Positions & Candidates</div>
       <div class="row-flex">
-        <input type="text" id="newPosInput" placeholder="പുതിയ പോസ്റ്റ് (ഉദാ: Leader, Secretary)">
-        <button class="btn btn-primary btn-sm" id="addPosBtn">ചേർക്കുക</button>
+        <input type="text" id="newPosInput" placeholder="New position (e.g. Leader, Secretary)">
+        <button class="btn btn-primary btn-sm" id="addPosBtn">Add</button>
       </div>
   `;
 
@@ -994,7 +994,7 @@ function adminCandidatesTab(){
     html += `<div class="position-admin-card">
       <div class="ph">
         <strong>${esc(pos.title)}</strong>
-        <button class="icon-btn-sm danger" data-remove-pos="${pos.id}" title="നീക്കം ചെയ്യുക">✕</button>
+        <button class="icon-btn-sm danger" data-remove-pos="${pos.id}" title="Remove">✕</button>
       </div>`;
     pos.candidates.forEach(c=>{
       html += `<div class="candidate-admin-row">
@@ -1007,7 +1007,7 @@ function adminCandidatesTab(){
     const pendingPhoto = pendingCandPhotos[pos.id];
     html += `<div class="row-flex" style="margin-top:10px; align-items:center;">
         <button class="photo-pick-btn" data-pick-photo-pos="${pos.id}">${pendingPhoto ? `<img src="${pendingPhoto}">` : '📷'}</button>
-        <input type="text" placeholder="പേര്" id="candName-${pos.id}" style="flex:2;">
+        <input type="text" placeholder="Name" id="candName-${pos.id}" style="flex:2;">
         <button class="btn btn-outline btn-sm" data-add-cand="${pos.id}">+</button>
       </div>
     </div>`;
@@ -1021,9 +1021,9 @@ function adminSettingsTab(){
   return `
     <div class="card">
       <div class="eyebrow">Branding</div>
-      <label>സ്ഥാപനത്തിന്റെ പേര് (School/Madrasa)</label>
+      <label>Institution Name (School/Madrasa)</label>
       <input type="text" id="instituteInput" value="${esc(state.instituteName)}" placeholder="School name">
-      <label>ലോഗോ</label>
+      <label>Logo</label>
       ${state.logoDataUrl
         ? `<div class="upload-preview">
              <img src="${state.logoDataUrl}" alt="logo">
@@ -1032,17 +1032,17 @@ function adminSettingsTab(){
            </div>`
         : `<div class="upload-box" id="logoUploadBox">
              <div class="icon">🏫</div>
-             <div class="txt">ലോഗോ അപ്‌ലോഡ് ചെയ്യാൻ ടാപ്പ് ചെയ്യുക</div>
+             <div class="txt">Tap to upload logo</div>
            </div>`}
     </div>
 
     <div class="card">
       <div class="eyebrow">Admin Login</div>
-      <label>യൂസർനെയിം</label>
+      <label>Username</label>
       <input type="text" id="adminUserSettingInput" value="${esc(state.adminUser)}">
-      <label>പാസ്‌വേഡ്</label>
+      <label>Password</label>
       <input type="text" id="adminPassSettingInput" value="${esc(state.adminPass)}">
-      <div class="small-muted">ഈ ക്രെഡൻഷ്യലുകൾ ഉപയോഗിച്ച് മാത്രമേ അഡ്മിൻ പാനൽ ആക്സസ് ചെയ്യാൻ കഴിയൂ.</div>
+      <div class="small-muted">Only these credentials can be used to access the admin panel.</div>
     </div>
   `;
 }
